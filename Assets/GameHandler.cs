@@ -4,7 +4,8 @@ using System.Text.RegularExpressions;
 
 public class GameHandler : MonoBehaviour {
 
-    private Player[] Players = new Player[1];
+    private Player[] players = new Player[2];
+    public GameObject playerPrefab;
 
     // Use this for initialization
     void Start () {
@@ -16,16 +17,16 @@ public class GameHandler : MonoBehaviour {
     /// </summary>
     void SetupPlayers()
     {
-        for (int i = 0; i < Players.Length; i++)
+        for (int i = 0; i < players.Length; i++)
         {
-            Players[i] = new Player(i.ToString(), this.gameObject);
+            players[i] = new Player(i.ToString(), this.gameObject);
         }
     }
     	
 	// Update is called once per frame
 	void Update () {
 
-        foreach (Player playerToUpdate in Players)
+        foreach (Player playerToUpdate in players)
         {
             playerToUpdate.Update();
         }
