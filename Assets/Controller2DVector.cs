@@ -53,7 +53,10 @@ public class Controller2DVector
         {
             scale = 1 / rawVector.magnitude;
         }
-        return new Vector2(rawVector.x * scale, rawVector.y * scale);
+
+        Vector2 scaledVector = new Vector2(rawVector.x * scale, rawVector.y * scale);
+
+        return scaledVector;
     }
 
 }

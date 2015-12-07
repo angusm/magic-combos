@@ -8,6 +8,8 @@ using UnityEngine;
 public class Controller
 {
 
+    private float DEADZONE = 0.5F;
+
     private string id;
     private Hashtable axisEventHandlers;
     private Hashtable vectorEventHandlers2d;
@@ -93,7 +95,15 @@ public class Controller
     private float GetProcessedAxisValue(string axisName)
     {
         string fullAxisName = this.GetAxisPrefix() + axisName;
-        return Input.GetAxis(fullAxisName);
+        float deadzone = this.GetDeadzone();
+        float rawValue = Input.GetAxis(fullAxisName);
+        return rawValue;
+        float absValue = Math.Abs(rawValue);
+        float sign = Math.Sign(rawValue);
+        float bottomedOutValue = Math.Min((absValue - deadzone), 0);
+        float processedValue = sign * bottomedOutValue / (1 - deadzone);
+        return processedValue;
+
     }
 
     /// <summary>
@@ -107,6 +117,7 @@ public class Controller
         Vector2 processedVector = controllerVector.GetVector();
         return processedVector;
     }
+
     /// <summary>
     /// Process the given controller
     /// </summary>
@@ -170,10 +181,20 @@ public class Controller
 
         string vectorName = (string) EventHandlerEntry.Key;
         Vector2 controllerVector = this.GetProcessedVector(vectorName);
+        
         foreach (Action<Vector2> EventHandlerFunction in (List<Action<Vector2>>)EventHandlerEntry.Value)
         {
             EventHandlerFunction(controllerVector);
         }
+    }
+
+    /// <summary>
+    /// Returns the Deadzone for the controller
+    /// </summary>
+    /// <returns></returns>
+    private float GetDeadzone()
+    {
+        return DEADZONE;
     }
 
 }
