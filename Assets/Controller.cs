@@ -95,12 +95,23 @@ public class Controller
     private float GetProcessedAxisValue(string axisName)
     {
         string fullAxisName = this.GetAxisPrefix() + axisName;
+
         float deadzone = this.GetDeadzone();
         float rawValue = Input.GetAxis(fullAxisName);
-        return rawValue;
         float absValue = Math.Abs(rawValue);
-        float sign = Math.Sign(rawValue);
-        float bottomedOutValue = Math.Min((absValue - deadzone), 0);
+
+        float sign = 1;
+        if (rawValue < 0)
+        {
+            sign = -1;
+        }
+
+        float bottomedOutValue = absValue - deadzone;
+        if (bottomedOutValue < 0)
+        {
+            bottomedOutValue = 0;
+        }
+
         float processedValue = sign * bottomedOutValue / (1 - deadzone);
         return processedValue;
 
@@ -182,6 +193,13 @@ public class Controller
         string vectorName = (string) EventHandlerEntry.Key;
         Vector2 controllerVector = this.GetProcessedVector(vectorName);
         
+        // Return early if we don't have any magnitude on the controller vector
+        if (controllerVector.magnitude == 0)
+        {
+            Debug.Log(controllerVector.magnitude);
+            return;
+        }
+
         foreach (Action<Vector2> EventHandlerFunction in (List<Action<Vector2>>)EventHandlerEntry.Value)
         {
             EventHandlerFunction(controllerVector);
