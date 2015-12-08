@@ -20,8 +20,12 @@ class Player {
     private const string LOOK_X_AXIS = "LookX";
     private const string LOOK_Y_AXIS = "LookY";
 
-    private const float MOVEMENT_FORCE = 10.0F;
+    private const float MOVEMENT_FORCE = 15.0F;
     private const float MAX_ROTATION_VELOCITY = 5F;
+
+    private const float MOVEMENT_DRAG = 0.75F;
+    private const float ANGULAR_DRAG = 0.05F;
+    private const float PLAYER_MASS = 1.0F;
     
     public Player(string playerID, GameObject context)
     {
@@ -30,6 +34,16 @@ class Player {
         this.context = context;
         GameObject loadedPrefab = (GameObject)Resources.Load("Prefabs/PrefabPlayer");
         this.prefab = MonoBehaviour.Instantiate(loadedPrefab) as GameObject;
+
+        this.SetupPhysics();
+    }
+
+    private void SetupPhysics()
+    {
+        Rigidbody rigidbody = this.GetRigidBody();
+        rigidbody.mass = PLAYER_MASS;
+        rigidbody.angularDrag = ANGULAR_DRAG;
+        rigidbody.drag = MOVEMENT_DRAG;
     }
 
     /// <summary>
@@ -61,6 +75,13 @@ class Player {
     /// <param name="aimVector"></param>
     private void Aim(Vector2 aimVector)
     {
+
+        // Do nothing with a 0 vector
+        if (aimVector.magnitude == 0)
+        {
+            return;
+        }
+
         Transform transform = this.GetTransform();
         Quaternion currentRotation = transform.rotation;
         Vector3 shootDirection = new Vector3(aimVector.x, 0, aimVector.y);
@@ -73,7 +94,7 @@ class Player {
     /// Returns the rigid body attached to the player
     /// </summary>
     /// <returns></returns>
-    private Rigidbody GetBody()
+    private Rigidbody GetRigidBody()
     {
         return this.prefab.GetComponent<Rigidbody>();
     }
@@ -93,7 +114,23 @@ class Player {
     /// <param name="movementVector"></param>
     private void Move(Vector2 movementVector)
     {
-        Rigidbody rigidBody = this.GetBody();
+        if (movementVector.magnitude != 0)
+        {
+            this.ApplyMovementVector(movementVector);
+        }
+        else
+        {
+            // TODO: Write code to stop ice-skating
+        }
+    }
+
+    /// <summary>
+    /// Apply the movement vector from the input
+    /// </summary>
+    /// <param name="movementVector"></param>
+    private void ApplyMovementVector(Vector2 movementVector)
+    {
+        Rigidbody rigidBody = this.GetRigidBody();
         float xForce = movementVector.x * MOVEMENT_FORCE;
         float zForce = movementVector.y * MOVEMENT_FORCE;
         rigidBody.AddForce(new Vector3(xForce, 0, zForce));

@@ -192,13 +192,6 @@ public class Controller
 
         string vectorName = (string) EventHandlerEntry.Key;
         Vector2 controllerVector = this.GetProcessedVector(vectorName);
-        
-        // Return early if we don't have any magnitude on the controller vector
-        if (controllerVector.magnitude == 0)
-        {
-            Debug.Log(controllerVector.magnitude);
-            return;
-        }
 
         foreach (Action<Vector2> EventHandlerFunction in (List<Action<Vector2>>)EventHandlerEntry.Value)
         {
