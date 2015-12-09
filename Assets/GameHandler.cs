@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 
 public class GameHandler : MonoBehaviour {
 
-    private Player[] players = new Player[2];
+    private Player[] players = new Player[1];
     public GameObject playerPrefab;
 
     // Use this for initialization

@@ -26,7 +26,10 @@ class Player {
     private static float MOVEMENT_DRAG = 0.75F;
     private static float ANGULAR_DRAG = 0.05F;
     private static float PLAYER_MASS = 1.0F;
-    
+    private static float GAME_BREAK = 0.9F;
+    private static float STOP_DEAD_ZONE = 0.0001F;
+    private static float MAXIMUM_MOVEMENT_VELOCITY = 100.0F;
+
     public Player(string playerID, GameObject context)
     {
         this.playerID = playerID;
@@ -120,10 +123,30 @@ class Player {
         }
         else
         {
-            // TODO: Write code to stop ice-skating
+            this.ApplyGameBreak();
         }
+
+        // Clamp the maximum speed
+        this.GetRigidBody().velocity = Vector3.ClampMagnitude(this.GetRigidBody().velocity, Player.MAXIMUM_MOVEMENT_VELOCITY);
+
     }
 
+    /// <summary>
+    /// Applies a very non-simulation (aka FUN!) break to movement
+    /// </summary>
+    private void ApplyGameBreak()
+    {
+        Rigidbody rigidBody = this.GetRigidBody();
+        if (rigidBody.velocity.magnitude < Player.STOP_DEAD_ZONE)
+        {
+            rigidBody.velocity = new Vector3();
+        }
+        else
+        {
+            Vector3 velocity = rigidBody.velocity;
+            rigidBody.velocity *= Player.GAME_BREAK;
+        }
+    }
     /// <summary>
     /// Apply the movement vector from the input
     /// </summary>
@@ -131,8 +154,8 @@ class Player {
     private void ApplyMovementVector(Vector2 movementVector)
     {
         Rigidbody rigidBody = this.GetRigidBody();
-        float xForce = movementVector.x * MOVEMENT_FORCE;
-        float zForce = movementVector.y * MOVEMENT_FORCE;
+        float xForce = movementVector.x * Player.MOVEMENT_FORCE;
+        float zForce = movementVector.y * Player.MOVEMENT_FORCE;
         rigidBody.AddForce(new Vector3(xForce, 0, zForce));
     }
 

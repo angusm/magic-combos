@@ -48,15 +48,7 @@ public class Controller2DVector
     public Vector2 GetVector()
     {
         Vector2 rawVector = this.vector;
-        float scale = 1;
-        if (rawVector.magnitude > 1)
-        {
-            scale = 1 / rawVector.magnitude;
-        }
-
-        Vector2 scaledVector = new Vector2(rawVector.x * scale, rawVector.y * scale);
-
-        return scaledVector;
+        return Vector2.ClampMagnitude(rawVector, 1.0F);
     }
 
 }
