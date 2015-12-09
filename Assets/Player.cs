@@ -26,7 +26,7 @@ class Player {
     private static float MOVEMENT_DRAG = 0.75F;
     private static float ANGULAR_DRAG = 0.05F;
     private static float PLAYER_MASS = 1.0F;
-    private static float GAME_BREAK = 0.9F;
+    private static float BREAK_FORCE = 0.2F;
     private static float STOP_DEAD_ZONE = 0.0001F;
     private static float MAXIMUM_MOVEMENT_VELOCITY = 100.0F;
 
@@ -123,7 +123,7 @@ class Player {
         }
         else
         {
-            this.ApplyGameBreak();
+            this.ApplyGameBreak(movementVector);
         }
 
         // Clamp the maximum speed
@@ -134,18 +134,39 @@ class Player {
     /// <summary>
     /// Applies a very non-simulation (aka FUN!) break to movement
     /// </summary>
-    private void ApplyGameBreak()
+    private void ApplyGameBreak(Vector2 movementVector)
     {
         Rigidbody rigidBody = this.GetRigidBody();
+        Vector3 velocity = rigidBody.velocity;
+        Boolean breakX = Player.GetFloatSignValue(velocity.x) != Player.GetFloatSignValue(movementVector.x);
+        Boolean breakY = Player.GetFloatSignValue(velocity.z) != Player.GetFloatSignValue(movementVector.y);
+        Boolean breakAll = rigidBody.velocity.magnitude < Player.STOP_DEAD_ZONE;
+
+        // Handle breaking along the X axis
+        float xBreakPercent = 0.0F;
+        if (breakX || breakAll)
+        {
+            xBreakPercent = velocity.x * -Player.BREAK_FORCE;
+        }
+
+        float yBreakPercent = 0.0F;
+        if (breakY || breakAll)
+        {
+            yBreakPercent = velocity.z * -Player.BREAK_FORCE;
+        }
+
+        // Setup the break vector
+        Vector3 breakVector = new Vector3(xBreakPercent, 0, yBreakPercent);
+
+        // Apply the break force
+        rigidBody.velocity += breakVector;
+
+        // Stop in the dead zone
         if (rigidBody.velocity.magnitude < Player.STOP_DEAD_ZONE)
         {
             rigidBody.velocity = new Vector3();
         }
-        else
-        {
-            Vector3 velocity = rigidBody.velocity;
-            rigidBody.velocity *= Player.GAME_BREAK;
-        }
+
     }
     /// <summary>
     /// Apply the movement vector from the input
@@ -166,6 +187,17 @@ class Player {
         this.controller.Update();
     }
 
-
+    /// <summary>
+    /// Returns 1 or -1 depending on the sign of the parameter
+    /// </summary>
+    /// <param name="value"></param>
+    private static float GetFloatSignValue(float value)
+    {
+        if (value == 0)
+        {
+            return 0.0F;
+        }
+        return value / Math.Abs(value);
+    }
 
 }
