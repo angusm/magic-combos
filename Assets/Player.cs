@@ -20,12 +20,12 @@ class Player {
     private const string LOOK_X_AXIS = "LookX";
     private const string LOOK_Y_AXIS = "LookY";
 
-    private const float MOVEMENT_FORCE = 15.0F;
-    private const float MAX_ROTATION_VELOCITY = 5F;
+    private static float MOVEMENT_FORCE = 15.0F;
+    private static float MAX_ROTATION_VELOCITY = 5F;
 
-    private const float MOVEMENT_DRAG = 0.75F;
-    private const float ANGULAR_DRAG = 0.05F;
-    private const float PLAYER_MASS = 1.0F;
+    private static float MOVEMENT_DRAG = 0.75F;
+    private static float ANGULAR_DRAG = 0.05F;
+    private static float PLAYER_MASS = 1.0F;
     
     public Player(string playerID, GameObject context)
     {
