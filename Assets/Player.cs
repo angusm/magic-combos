@@ -8,9 +8,19 @@ using UnityEngine;
 class Player {
 
     private string playerID;
+    private int comboCode; // Sequence of numbers used to store spell chain combos, whenever a button is 
+                            // pressed its value is multiplied by ten, the combo value for the pressed 
+                            // button is added and then it is modulo'd by 100 and the remainder is stored
+                            // as the final value
+         
     private Controller controller;
     private GameObject context;
     private GameObject prefab;
+
+    private const int AIR_COMBO_VALUE = 1;
+    private const int FIRE_COMBO_VALUE = 2;
+    private const int EARTH_COMBO_VALUE = 3;
+    private const int WATER_COMBO_VALUE = 4;
 
     private const string MOVE_VECTOR = "Movement";
     private const string MOVE_X_AXIS = "MoveX";
@@ -19,6 +29,13 @@ class Player {
     private const string LOOK_VECTOR = "Look";
     private const string LOOK_X_AXIS = "LookX";
     private const string LOOK_Y_AXIS = "LookY";
+
+    private const string AIR_BUTTON = "Air";
+    private const string FIRE_BUTTON = "Fire";
+    private const string EARTH_BUTTON = "Earth";
+    private const string WATER_BUTTON = "Water";
+
+    private const string SHOOT_BUTTON = "Shoot";
 
     private static float MOVEMENT_FORCE = 15.0F;
     private static float MAX_ROTATION_VELOCITY = 5F;
@@ -37,6 +54,7 @@ class Player {
         this.context = context;
         GameObject loadedPrefab = (GameObject)Resources.Load("Prefabs/PrefabPlayer");
         this.prefab = MonoBehaviour.Instantiate(loadedPrefab) as GameObject;
+        this.comboCode = 0;
 
         this.SetupPhysics();
     }
@@ -70,6 +88,117 @@ class Player {
         // Aiming
         this.controller.Add2DVector(LOOK_VECTOR, LOOK_X_AXIS, LOOK_Y_AXIS);
         this.controller.On2DVector(LOOK_VECTOR, this.Aim);
+
+        // Combos
+        this.controller.OnButton(AIR_BUTTON, this.addAir);
+        this.controller.OnButton(FIRE_BUTTON, this.addFire);
+        this.controller.OnButton(EARTH_BUTTON, this.addEarth);
+        this.controller.OnButton(WATER_BUTTON, this.addWater);
+
+
+        // Fire
+        this.controller.OnAxis(SHOOT_BUTTON, this.Shoot);
+    }
+
+    /// <summary>
+    /// Handle the addition of the air to the player's current combo
+    /// </summary>
+    /// <param name="buttonHoldDuration"></param>
+    private void addAir(float buttonHoldDuration)
+    {
+        this.processElementButton(buttonHoldDuration, AIR_COMBO_VALUE);
+    }
+
+    /// <summary>
+    /// Handle the addition of fire to the player's current combo
+    /// </summary>
+    /// <param name="buttonHoldDuration"></param>
+    private void addFire(float buttonHoldDuration)
+    {
+        this.processElementButton(buttonHoldDuration, FIRE_COMBO_VALUE);
+    }
+
+    /// <summary>
+    /// Handle the addtion of earth to the player's current combo
+    /// </summary>
+    /// <param name="buttonHoldDuration"></param>
+    private void addEarth(float buttonHoldDuration)
+    {
+        this.processElementButton(buttonHoldDuration, EARTH_COMBO_VALUE);
+    }
+
+    /// <summary>
+    /// Handle the addtion of water to the player's current combo
+    /// </summary>
+    /// <param name="buttonHoldDuration"></param>
+    private void addWater(float buttonHoldDuration)
+    {
+        this.processElementButton(buttonHoldDuration, WATER_COMBO_VALUE);
+    }
+
+    /// <summary>
+    /// Process an element button press, ensuring that the we're not re-processing
+    /// the same button twice
+    /// </summary>
+    /// <param name="buttonHoldDuration"></param>
+    /// <param name="elementValue"></param>
+    private void processElementButton(float buttonHoldDuration, int elementValue)
+    {
+        // TODO: Ensure we're properly handling the button hold duration
+        this.AddElementValue(elementValue);
+    }
+
+    /// <summary>
+    /// Add the element value to the current combo value
+    /// </summary>
+    /// <param name="elementValue"></param>
+    private void AddElementValue(int elementValue)
+    {
+        int newComboValue = ((this.comboCode * 10) % 100) + elementValue;
+        this.comboCode = newComboValue;
+    }
+
+    /// <summary>
+    /// Function to shoot a given projectile out
+    /// </summary>
+    /// <param name="axisValue"></param>
+    private void Shoot(float axisValue)
+    {
+        // Do nothing if they haven't pulled the trigger
+        if (axisValue < 0.5)
+        {
+            return;
+        }
+        // TODO: Actually do something with the combo code
+        GameObject projectile = this.InstantiateProjectile();
+        Rigidbody rigidbody = projectile.GetComponent<Rigidbody>();
+        Vector3 shootVector = this.GetTransform().rotation * new Vector3(0, 0, 30f);
+        rigidbody.AddForce(shootVector);
+    }
+
+    /// <summary>
+    /// Instantiate a projectile based on the given combo code
+    /// </summary>
+    /// <returns></returns>
+    private GameObject InstantiateProjectile()
+    {
+        // TODO: Make this use combo code
+        GameObject projectilePrefab = (GameObject)Resources.Load("Prefabs/PrefabProjectile");
+        GameObject projectile = MonoBehaviour.Instantiate(projectilePrefab) as GameObject;
+
+        Transform projectileTransform = projectile.GetComponent<Transform>();
+        Transform playerTransform = this.GetTransform();
+
+        projectileTransform.position = playerTransform.position + (playerTransform.rotation * new Vector3(0, 0, 3));
+        projectileTransform.rotation = playerTransform.rotation;
+
+        Rigidbody rigidbody = projectile.GetComponent<Rigidbody>();
+        rigidbody.mass = PLAYER_MASS;
+        rigidbody.angularDrag = ANGULAR_DRAG;
+        rigidbody.drag = MOVEMENT_DRAG;
+
+        return projectile;
+
     }
 
     /// <summary>
@@ -91,6 +220,15 @@ class Player {
         Quaternion desiredRotation = Quaternion.LookRotation(shootDirection);
 
         transform.rotation = Quaternion.RotateTowards(currentRotation, desiredRotation, MAX_ROTATION_VELOCITY);
+    }
+
+    /// <summary>
+    /// Return a Vector3 that represents the player's current facing
+    /// </summary>
+    /// <returns></returns>
+    private Vector3 GetAimVector()
+    {
+        return this.GetTransform().rotation.ToEulerAngles();
     }
 
     /// <summary>

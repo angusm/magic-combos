@@ -11,6 +11,7 @@ public class Controller
     private float DEADZONE = 0.5F;
 
     private string id;
+    private Hashtable buttonEventHandlers;
     private Hashtable axisEventHandlers;
     private Hashtable vectorEventHandlers2d;
     private Hashtable controller2DVectors;
@@ -21,6 +22,7 @@ public class Controller
 
         this.controller2DVectors = new Hashtable();
 
+        this.buttonEventHandlers = new Hashtable();
         this.axisEventHandlers = new Hashtable();
         this.vectorEventHandlers2d = new Hashtable();
     }
@@ -68,15 +70,40 @@ public class Controller
     /// <param name="eventHandler"></param>
     public void OnAxis(string axisName, Action<float> eventHandler)
     {
-        // Start tracking event handlers on the current event
-        if (!this.axisEventHandlers.ContainsKey(axisName))
+        this.addFloatEventHandlerToHastable(axisName, eventHandler, this.axisEventHandlers);
+    }
+
+    /// <summary>
+    /// Register an event handler to be called when a button is pressed,
+    /// A button is considered pressed when the given axis registers a positive value
+    /// The event handler will be called with the number of milliseconds the button
+    /// has been held down for passed in as a parameter
+    /// </summary>
+    /// <param name="axisName"></param>
+    /// <param name="eventHandler"></param>
+    public void OnButton(string axisName, Action<float> eventHandler)
+    {
+        this.addFloatEventHandlerToHastable(axisName, eventHandler, this.buttonEventHandlers);
+    }
+
+    /// <summary>
+    /// Utility function used to start tracking events on the given axis and trigger a callback
+    /// to the given event handler when the event is fired
+    /// </summary>
+    /// <param name="hashIndex"></param>
+    /// <param name="eventHandler"></param>
+    /// <param name="eventHash"></param>
+    private void addFloatEventHandlerToHastable(string hashIndex, Action<float> eventHandler, Hashtable eventHash)
+    {
+        // Start tracking event handlers on the passed in event
+        if (!eventHash.ContainsKey(hashIndex))
         {
-            this.axisEventHandlers.Add(axisName, new List<Action<float>>());            
+            eventHash.Add(hashIndex, new List<Action<float>>());
         }
 
         // Add the new event handler to the list
-        List<Action<float>> EventHandlersForVector = (List<Action<float>>) this.axisEventHandlers[axisName];
-        EventHandlersForVector.Add(eventHandler);
+        List<Action<float>> EventHandlers = (List<Action<float>>)eventHash[hashIndex];
+        EventHandlers.Add(eventHandler);
     }
 
     /// <summary>
@@ -158,6 +185,13 @@ public class Controller
         {
             this.ProcessAxisEventHandlerEntry(AxisEventHandlerEntry);
         }
+        foreach (DictionaryEntry ButtonEventHandlerEntry in this.buttonEventHandlers)
+        {
+            if (this.GetProcessedAxisValue((string)ButtonEventHandlerEntry.Key) > 0)
+            {
+                this.ProcessButtonEventHandlerEntry(ButtonEventHandlerEntry);
+            }
+        }
     }
 
     /// <summary>
@@ -177,9 +211,30 @@ public class Controller
     {
 
         float axisValue = this.GetProcessedAxisValue((string)EventHandlerEntry.Key);
-        foreach (Action<float> EventHandlerFunction in (List<Action<float>>)EventHandlerEntry.Value)
+        this.ProcessFloatEventHandlerList((List<Action<float>>)EventHandlerEntry.Value, axisValue);
+    }
+
+    /// <summary>
+    /// Process the given event handler entry for a button press
+    /// </summary>
+    /// <param name="EventHandlerEntry"></param>
+    private void ProcessButtonEventHandlerEntry(DictionaryEntry EventHandlerEntry)
+    {
+        // TODO: Setup proper hold duration tracking on buttons
+        float holdDuration = 0.0f;
+        this.ProcessFloatEventHandlerList((List<Action<float>>)EventHandlerEntry.Value, holdDuration);
+    }
+
+    /// <summary>
+    /// Process all of the events in an event handler list while passing in the given float value
+    /// </summary>
+    /// <param name="EventHandlerList"></param>
+    /// <param name="FloatValue"></param>
+    private void ProcessFloatEventHandlerList(List<Action<float>> EventHandlerList, float FloatValue)
+    {
+        foreach (Action<float> EventHandlerFunction in EventHandlerList)
         {
-            EventHandlerFunction(axisValue);
+            EventHandlerFunction(FloatValue);
         }
     }
 

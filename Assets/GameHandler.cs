@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Text.RegularExpressions;
+using System;
 
 public class GameHandler : MonoBehaviour {
 
@@ -10,6 +11,7 @@ public class GameHandler : MonoBehaviour {
     // Use this for initialization
     void Start () {
         this.SetupPlayers();
+        StartCoroutine(fiveSecs());
     }
 
     /// <summary>
@@ -22,9 +24,18 @@ public class GameHandler : MonoBehaviour {
             players[i] = new Player(i.ToString(), this.gameObject);
         }
     }
+    
+    IEnumerator fiveSecs()
+    {
+        print(Time.time);
+        yield return new WaitForSeconds(5);
+        print(Time.time);
+        StartCoroutine(fiveSecs());
+    }
     	
 	// Update is called once per frame
-	void Update () {
+	void Update ()
+    {
 
         foreach (Player playerToUpdate in players)
         {
