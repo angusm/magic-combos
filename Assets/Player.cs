@@ -5,7 +5,7 @@ using System.Text;
 using UnityEngine;
 
 
-class Player {
+class Player : CustomGameObject {
 
     private string playerID;
     private int comboCode; // Sequence of numbers used to store spell chain combos, whenever a button is 
@@ -16,6 +16,7 @@ class Player {
     private Controller controller;
     private GameObject context;
     private GameObject prefab;
+    private float lastShotTime;
 
     private const int AIR_COMBO_VALUE = 1;
     private const int FIRE_COMBO_VALUE = 2;
@@ -47,16 +48,14 @@ class Player {
     private static float STOP_DEAD_ZONE = 0.0001F;
     private static float MAXIMUM_MOVEMENT_VELOCITY = 100.0F;
 
-    public Player(string playerID, GameObject context)
+    private static float TIME_BETWEEN_SHOTS = 0.5f;
+
+    public Player(string playerID, GameObject context) : base(context, "Prefabs/PrefabPlayer")
     {
         this.playerID = playerID;
         this.SetupController();
-        this.context = context;
-        GameObject loadedPrefab = (GameObject)Resources.Load("Prefabs/PrefabPlayer");
-        this.prefab = MonoBehaviour.Instantiate(loadedPrefab) as GameObject;
         this.comboCode = 0;
-
-        this.SetupPhysics();
+        this.lastShotTime = 0;
     }
 
     private void SetupPhysics()
@@ -169,10 +168,20 @@ class Player {
         {
             return;
         }
+
+        // Do nothing if they've shot too recently to shoot again
+        if (Time.fixedTime - this.lastShotTime < Player.TIME_BETWEEN_SHOTS)
+        {
+            return;
+        }
+
+        // Mark the time this shot was fired
+        this.lastShotTime = Time.fixedTime;
+
         // TODO: Actually do something with the combo code
         GameObject projectile = this.InstantiateProjectile();
         Rigidbody rigidbody = projectile.GetComponent<Rigidbody>();
-        Vector3 shootVector = this.GetTransform().rotation * new Vector3(0, 0, 30f);
+        Vector3 shootVector = this.GetTransform().rotation * new Vector3(0, 0, 5000f);
         rigidbody.AddForce(shootVector);
     }
 
@@ -194,8 +203,8 @@ class Player {
 
         Rigidbody rigidbody = projectile.GetComponent<Rigidbody>();
         rigidbody.mass = PLAYER_MASS;
-        rigidbody.angularDrag = ANGULAR_DRAG;
-        rigidbody.drag = MOVEMENT_DRAG;
+        rigidbody.angularDrag = 0;
+        rigidbody.drag = 0;
 
         return projectile;
 
@@ -228,25 +237,7 @@ class Player {
     /// <returns></returns>
     private Vector3 GetAimVector()
     {
-        return this.GetTransform().rotation.ToEulerAngles();
-    }
-
-    /// <summary>
-    /// Returns the rigid body attached to the player
-    /// </summary>
-    /// <returns></returns>
-    private Rigidbody GetRigidBody()
-    {
-        return this.prefab.GetComponent<Rigidbody>();
-    }
-
-    /// <summary>
-    /// Returns the transform attached to the player
-    /// </summary>
-    /// <returns></returns>
-    private Transform GetTransform()
-    {
-        return this.prefab.GetComponent<Transform>();
+        return this.GetTransform().rotation.eulerAngles;
     }
 
     /// <summary>
